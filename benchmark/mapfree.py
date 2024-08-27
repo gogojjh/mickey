@@ -1,3 +1,8 @@
+"""Usage
+python -m benchmark.mapfree --submission_path path_map_free_dataset/results/xxx/submission.zip --split val --log error \
+--dataset_path path_map_free_dataset
+"""
+
 import argparse
 from collections import defaultdict
 from pathlib import Path
@@ -69,8 +74,11 @@ def compute_scene_metrics(dataset_path: Path, submission_zip: ZipFile, scene: st
     results = defaultdict(list)
 
     # compute metrics per frame
+    cnt_large_error = 0
     for frame_num, (q_gt, t_gt, _) in gt_poses.items():
         if frame_num not in estimated_poses:
+            out_str = f'{scene}-{frame_num:03}: No estimate'
+            logging.warning(out_str)
             failures += 1
             continue
 
@@ -79,6 +87,19 @@ def compute_scene_metrics(dataset_path: Path, submission_zip: ZipFile, scene: st
                         confidence=confidence, K=K[frame_num], W=W, H=H)
         metric_manager(inputs, results)
 
+        # NOTE(gogojjh):
+        error = np.linalg.norm(t_est - t_gt)
+        out_str = f'{scene}-{frame_num:03}: '
+        if error > 1.0:
+            out_str += '(>1.0) Est: '
+            out_str += ' '.join([f'{v:.3f}' for v in t_est])
+            cnt_large_error += 1
+            out_str += '; GT: '
+            out_str += ' '.join([f'{v:.3f}' for v in t_gt])
+            out_str += f'; error: {error:.3f}'
+            logging.warning(out_str)
+    logging.warning(f'{scene} faliure / total: {failures} / {len(gt_poses)}')
+    logging.warning(f'{scene} large_error / total: {cnt_large_error} / {len(gt_poses)}')
     return results, failures
 
 
@@ -119,6 +140,8 @@ def aggregate_results(all_results, all_failures):
 
     # output metrics
     output_metrics = dict()
+    output_metrics['Maximum Translation Error'] = max(all_metrics['trans_err'])
+    output_metrics['Maximum Rotation Error'] = max(all_metrics['rot_err'])
     output_metrics['Average Median Translation Error'] = avg_median_metrics['trans_err']
     output_metrics['Average Median Rotation Error'] = avg_median_metrics['rot_err']
     output_metrics['Average Median Reprojection Error'] = avg_median_metrics['reproj_err']
