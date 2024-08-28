@@ -140,11 +140,11 @@ def aggregate_results(all_results, all_failures):
 
     # output metrics
     output_metrics = dict()
-    output_metrics['Maximum Translation Error'] = max(all_metrics['trans_err'])
-    output_metrics['Maximum Rotation Error'] = max(all_metrics['rot_err'])
-    output_metrics['Average Median Translation Error'] = avg_median_metrics['trans_err']
-    output_metrics['Average Median Rotation Error'] = avg_median_metrics['rot_err']
-    output_metrics['Average Median Reprojection Error'] = avg_median_metrics['reproj_err']
+    output_metrics['Maximum Translation Error [m]'] = max(all_metrics['trans_err'])
+    output_metrics['Maximum Rotation Error [deg]'] = max(all_metrics['rot_err'])
+    output_metrics['Average Median Translation Error [m]'] = avg_median_metrics['trans_err']
+    output_metrics['Average Median Rotation Error [deg]'] = avg_median_metrics['rot_err']
+    output_metrics['Average Median Reprojection Error [px]'] = avg_median_metrics['reproj_err']
     output_metrics[f'Precision @ Pose Error < ({config.t_threshold*100}cm, {config.R_threshold}deg)'] = prec_pose
     output_metrics[f'AUC @ Pose Error < ({config.t_threshold*100}cm, {config.R_threshold}deg)'] = auc_pose
     output_metrics[f'Precision @ VCRE < {config.vcre_threshold}px'] = prec_vcre

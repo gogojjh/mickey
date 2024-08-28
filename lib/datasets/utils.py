@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from numpy.linalg import inv
 
+
 def imread(path, augment_fn=None):
     cv_type = cv2.IMREAD_COLOR
     image = cv2.imread(str(path), cv_type)
@@ -37,21 +38,22 @@ def get_divisible_wh(w, h, df=None):
 
 def pad_bottom_right(inp, pad_size, df, ret_mask=False, border=3):
     assert isinstance(pad_size, int) and pad_size >= max(
-        inp.shape[-2:]), f"{pad_size} < {max(inp.shape[-2:])}"
+        inp.shape[-2:]
+    ), f"{pad_size} < {max(inp.shape[-2:])}"
     mask = None
     if inp.ndim == 2:
         padded = np.zeros((pad_size, pad_size), dtype=inp.dtype)
-        padded[:inp.shape[0], :inp.shape[1]] = inp
+        padded[: inp.shape[0], : inp.shape[1]] = inp
         if ret_mask:
             mask = np.zeros((pad_size, pad_size), dtype=bool)
-            mask[:inp.shape[0], :inp.shape[1]] = True
+            mask[: inp.shape[0], : inp.shape[1]] = True
     elif inp.ndim == 3:
         padded = np.zeros((pad_size, pad_size, inp.shape[2]), dtype=inp.dtype)
-        padded[:inp.shape[0], :inp.shape[1], :] = inp
+        padded[: inp.shape[0], : inp.shape[1], :] = inp
         if ret_mask:
 
-            mask = np.zeros((1, pad_size//df, pad_size//df))
-            mask[:, :inp.shape[0]//df-border, :inp.shape[1]//df-border] = 1
+            mask = np.zeros((1, pad_size // df, pad_size // df))
+            mask[:, : inp.shape[0] // df - border, : inp.shape[1] // df - border] = 1
 
     else:
         raise NotImplementedError()
@@ -83,11 +85,12 @@ def read_depth_image(path):
     depth = torch.from_numpy(depth).float()  # (h, w)
     return depth
 
+
 def correct_intrinsic_scale(K, scale_x, scale_y):
-    '''Given an intrinsic matrix (3x3) and two scale factors, returns the new intrinsic matrix corresponding to
+    """Given an intrinsic matrix (3x3) and two scale factors, returns the new intrinsic matrix corresponding to
     the new coordinates x' = scale_x * x; y' = scale_y * y
     Source: https://dsp.stackexchange.com/questions/6055/how-does-resizing-an-image-affect-the-intrinsic-camera-matrix
-    '''
+    """
 
     transform = torch.eye(3)
     transform[0, 0] = scale_x
@@ -98,18 +101,19 @@ def correct_intrinsic_scale(K, scale_x, scale_y):
 
     return Kprime
 
+
 def define_sampling_grid(im_size, feats_downsample=4, step=1):
     """
-        Auxiliary function to generate the sampling grid from the feature map
-        Args:
-            im_size: original image size that goes into the network
-            feats_downsample: rescaling factor that happens within the architecture due to downsampling steps
-        Output:
-            indexes_mat: dense grid sampling indexes, size: (im_size/feats_downsample, im_size/feats_downsample)
+    Auxiliary function to generate the sampling grid from the feature map
+    Args:
+        im_size: original image size that goes into the network
+        feats_downsample: rescaling factor that happens within the architecture due to downsampling steps
+    Output:
+        indexes_mat: dense grid sampling indexes, size: (im_size/feats_downsample, im_size/feats_downsample)
     """
 
-    feats_size = int(im_size/feats_downsample)
-    grid_size = int(im_size/feats_downsample/step)
+    feats_size = int(im_size / feats_downsample)
+    grid_size = int(im_size / feats_downsample / step)
 
     indexes = np.asarray(range(0, feats_size, step))[:grid_size]
     indexes_x = indexes.reshape((1, len(indexes), 1))
@@ -119,8 +123,6 @@ def define_sampling_grid(im_size, feats_downsample=4, step=1):
     indexes_y = np.tile(indexes_y, [1, len(indexes), 1])
 
     indexes_mat = np.concatenate([indexes_x, indexes_y], axis=-1)
-    indexes_mat = indexes_mat.reshape((grid_size*grid_size, 2))
+    indexes_mat = indexes_mat.reshape((grid_size * grid_size, 2))
 
     return indexes_mat
-
-
